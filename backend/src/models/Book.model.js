@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
-// Chapter Schema
+// Chapter / Daily Life Entry Schema
 const chapterSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'Chapter title is required'],
+      required: [true, 'Entry title is required'],
       trim: true,
     },
     description: {
@@ -16,25 +16,58 @@ const chapterSchema = new mongoose.Schema(
     content: {
       type: String,
       default: '',
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
+    mood: {
+      type: String,
+      default: 'Reflective',
+    },
+    weather: {
+      type: String,
+      default: 'Sunny',
+    },
+    timeOfDay: {
+      type: String,
+      default: 'Day',
+    },
+    location: {
+      type: String,
+      default: '',
       trim: true,
+    },
+    // Array of photo URLs (Cloudinary images or external URLs)
+    photos: {
+      type: [String],
+      default: [],
+    },
+    // Array of video URLs (Cloudinary video clips, YouTube embeds, MP4 links)
+    videos: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }
 );
 
 export const Chapter = mongoose.model('Chapter', chapterSchema);
+export const DiaryEntry = Chapter;
 
-// Book Schema
+// Diary / Living Life Vlog Schema
 const bookSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required'],
+      index: true,
     },
     title: {
       type: String,
-      required: [true, 'Book title is required'],
+      required: [true, 'Diary title is required'],
       trim: true,
     },
     subtitle: {
@@ -49,7 +82,7 @@ const bookSchema = new mongoose.Schema(
     },
     coverImage: {
       type: String,
-      default: '', // Store Cloudinary URL later
+      default: '',
       trim: true,
     },
     chapters: [
@@ -62,10 +95,49 @@ const bookSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['draft', 'published'],
-      default: 'draft',
+      default: 'published',
+    },
+    mood: {
+      type: String,
+      default: 'Daily Life',
+      trim: true,
+    },
+    category: {
+      type: String,
+      default: 'Daily Vlog',
+      trim: true,
+    },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    price: {
+      type: Number,
+      default: 0,
+      min: [0, 'Price cannot be negative'],
+    },
+    freePreviewEntries: {
+      type: Number,
+      default: 2, // First 2 entries free preview
+      min: [0, 'Preview count cannot be negative'],
+    },
+    purchasedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    isOngoing: {
+      type: Boolean,
+      default: true, // It's an ongoing living diary!
+    },
+    viewsCount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }
 );
 
 export const Book = mongoose.model('Book', bookSchema);
+export const Diary = Book;

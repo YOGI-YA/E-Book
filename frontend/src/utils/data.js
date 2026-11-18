@@ -1,31 +1,46 @@
-import { Lightbulb, BookOpen, Download, Library } from 'lucide-react';
+import { BookOpen, ShieldCheck, DollarSign, Sparkles, Eye, Download } from 'lucide-react';
 
 export const FEATURES = [
   {
-    title: 'AI-Powerd Writing',
+    title: 'Written Daily Vlogs',
     description:
-      "Overcome writer's block with our smart assistant that helps you generate ideas into e-books ",
-    icon: Lightbulb,
-    gradient: 'from-violet-500 to-purple-600',
+      'Like a YouTube vlog, but in intimate, beautifully crafted text. Document your real daily life, adventures, and milestones.',
+    icon: BookOpen,
+    gradient: 'from-indigo-500 to-violet-600',
   },
   {
-    title: 'Immersive Reader',
+    title: 'Passwordless Email OTP',
     description:
-      'Preview your eboo in clean,read-only format. Adjust font sizes for comfort reading',
-    icon: BookOpen,
+      'Zero passwords to forget or leak. Receive a secure 6-digit one-time passcode on your email for instant sign-in.',
+    icon: ShieldCheck,
     gradient: 'from-blue-500 to-cyan-600',
   },
   {
-    title: 'One-click-Export',
-    description: 'Export your e-book to PDF,DOCX instantly ,ready to publishing',
-    icon: Download,
+    title: 'Razorpay Monetization',
+    description:
+      'Turn your personal journey into revenue. Readers unlock your premium diary series securely using UPI, Cards, and Wallets.',
+    icon: DollarSign,
+    gradient: 'from-amber-500 to-orange-600',
+  },
+  {
+    title: 'Free Preview Teasers',
+    description:
+      'Offer 1 or 2 daily entries free to hook readers, then lock subsequent days behind a seamless Razorpay paywall.',
+    icon: Eye,
     gradient: 'from-emerald-500 to-teal-600',
   },
   {
-    title: 'E-Book Management',
+    title: 'AI Vlog Assistant',
     description:
-      ' Organise all your ebooks projects in a personal dashboard,Easy trac ,Edit drafs and manage your books.',
-    icon: Library,
-    gradient: 'from-pink-500 to-rose-600',
+      'Jot down messy bullet notes from your day, and let AI transform them into vivid, emotionally rich daily diary entries.',
+    icon: Sparkles,
+    gradient: 'from-purple-500 to-pink-600',
+  },
+  {
+    title: 'Instant Keepsake Export',
+    description:
+      'Export your entire diary series into beautifully formatted PDF and DOCX documents with a single click.',
+    icon: Download,
+    gradient: 'from-rose-500 to-red-600',
   },
 ];

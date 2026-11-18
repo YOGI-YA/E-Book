@@ -1,50 +1,43 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Plus, Book } from 'lucide-react';
+import { Plus, BookOpen, Compass, CheckCircle2, Edit3 } from 'lucide-react';
 
 import DashBoardLayout from '../components/layout/DashBoardLayout';
 import BookCard from '../components/card/BookCard';
 import CreateBookModal from '../components/models/CreateBookModal';
+import LogEntryModal from '../components/models/LogEntryModal';
 import Button from '../components/ui/Button';
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPath';
+import { useAuth } from '../context/AuthContext';
 
-const BookCardSkull = () => (
-  <div className="bg-white rounded-lg shadow-md p-4 animate-pulse">
-    <div className="h-40 bg-slate-200 rounded-md mb-4"></div>
-    <div className="space-y-2">
-      <div className="h-6 bg-slate-200 rounded w-3/4"></div>
-      <div className="h-4 bg-slate-300 rounded w-1/2"></div>
-    </div>
+const DiaryCardSkeleton = () => (
+  <div className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 animate-pulse space-y-4">
+    <div className="h-44 bg-gray-200 rounded-2xl"></div>
+    <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+    <div className="h-4 bg-gray-100 rounded w-1/2"></div>
   </div>
 );
 
-const ConfirmationModel = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-sm w-full mx-4">
-        <div
-          className="flex justify-between items-center p-6 border-b border-gray-200"
-          onClick={onClose}
-        >
-          <h2 className="text-xl font-semibold"></h2>
-          <button className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-        </div>
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">{title}</h3>
-
-          <p className="text-gray-600 mb-6">{message}</p>
-          <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={onClose}>
-              Close
-            </Button>
-            <Button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white">
-              Confirm
-            </Button>
-          </div>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-600">{message}</p>
+        <div className="flex gap-2 justify-end pt-2">
+          <Button variant="secondary" onClick={onClose} className="rounded-xl text-xs py-2">
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            className="bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs py-2"
+          >
+            Confirm Delete
+          </Button>
         </div>
       </div>
     </div>
@@ -52,116 +45,215 @@ const ConfirmationModel = ({ isOpen, onClose, onConfirm, title, message }) => {
 };
 
 const DashboardPage = () => {
-  const [books, setBooks] = useState([]);
-  const [isLoading, setIsloading] = useState(true);
-  const [isCreateModelOpen, setIsCreateModalOpen] = useState(false);
-  const [bookToDelete, setBookToDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState('my-diaries'); // 'my-diaries' | 'unlocked'
+  const [myDiaries, setMyDiaries] = useState([]);
+  const [unlockedDiaries, setUnlockedDiaries] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Modals
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [diaryToDelete, setDiaryToDelete] = useState(null);
+  const [quickEntryDiaryId, setQuickEntryDiaryId] = useState(null);
+
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const response = await axiosInstance.get(API_PATHS.BOOKS.GET_BOOK);
-        setBooks(Array.isArray(response.data.data) ? response.data.data : []);
-      } catch (error) {
-        console.error('Failed to fetch books', error);
-        toast.error('Failed to fetch your eBooks');
-      } finally {
-        setIsloading(false);
-      }
-    };
-    fetchBooks();
-  }, []);
-
-  const handleDeleteBook = async () => {
-    if (!bookToDelete) return;
+  const fetchDiaries = async () => {
+    setIsLoading(true);
     try {
-      await axiosInstance.delete(`${API_PATHS.BOOKS.DELETE_BOOK}/${bookToDelete}`);
-      setBooks(books.filter((book) => book._id !== bookToDelete));
-      toast.success('ebook deleted successfully.');
+      const [myRes, purchasedRes] = await Promise.allSettled([
+        axiosInstance.get(API_PATHS.DIARIES.GET_MY_DIARIES),
+        axiosInstance.get(API_PATHS.DIARIES.GET_PURCHASED),
+      ]);
+
+      if (myRes.status === 'fulfilled') {
+        setMyDiaries(Array.isArray(myRes.value.data?.data) ? myRes.value.data.data : []);
+      }
+      if (purchasedRes.status === 'fulfilled') {
+        setUnlockedDiaries(
+          Array.isArray(purchasedRes.value.data?.data) ? purchasedRes.value.data.data : []
+        );
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Unable to Delete E-book');
+      console.error('Failed to fetch diaries', error);
+      toast.error('Failed to load your diaries');
     } finally {
-      setBookToDelete(null);
+      setIsLoading(false);
     }
   };
 
-  const handleCreatedBookClick = () => {
-    setIsCreateModalOpen(true);
+  useEffect(() => {
+    fetchDiaries();
+  }, []);
+
+  const handleDeleteDiary = async () => {
+    if (!diaryToDelete) return;
+    try {
+      await axiosInstance.delete(`${API_PATHS.DIARIES.DELETE}/${diaryToDelete}`);
+      setMyDiaries((prev) => prev.filter((d) => d._id !== diaryToDelete));
+      toast.success('Diary deleted successfully.');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to delete diary');
+    } finally {
+      setDiaryToDelete(null);
+    }
   };
 
-  const handleBookCreated = (bookId) => {
+  const handleDiaryCreated = (diaryId) => {
     setIsCreateModalOpen(false);
-    navigate(`/editor/${bookId}`);
+    navigate(`/view-book/${diaryId}`);
   };
+
+  const currentList = activeTab === 'my-diaries' ? myDiaries : unlockedDiaries;
+  const primaryDiaryId = myDiaries.length > 0 ? myDiaries[0]._id : null;
 
   return (
     <DashBoardLayout>
-      <div className="min-h-screen  bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto  ">
-          {/* Header Section */}
-          <div className="md:flex md:justify-between items-start mb-8">
-            <div className="flex flex-col gap-1 mb-4">
-              <h1 className="text-3xl font-bold text-gray-900">All eBook</h1>
-              <p className="text-sm text-slate-600 mt-1">
-                Create, edit, and manage all your AI-generated eBooks.
-              </p>
+      <div className="space-y-8">
+        {/* Welcome & Action Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                Welcome back, {user?.name || 'Creator'} 👋
+              </h1>
             </div>
-            <Button
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-              onClick={handleCreatedBookClick}
-              icon={Plus}
-            >
-              Create New eBook
-            </Button>
+            <p className="text-sm text-gray-500 mt-1">
+              Your ongoing life diary. Write today's memory, attach photos & video clips anytime.
+            </p>
           </div>
 
-          {/* Content Section */}
-          {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <BookCardSkull key={i} />
-              ))}
-            </div>
-          ) : books.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-lg border-2 border-dashed border-gray-300">
-              <div className="mb-4">
-                <Book className="w-16 h-16 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No ebooks found</h3>
-              <p className="text-gray-600 text-center mb-6">
-                You haven't created any eBooks yet. Get started by creating your first Book
-              </p>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              to="/explore"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-bold text-xs rounded-xl transition-all shadow-xs"
+            >
+              <Compass className="w-4 h-4 text-indigo-600" />
+              <span>Explore Others</span>
+            </Link>
+
+            {primaryDiaryId && (
               <Button
-                onClick={handleCreatedBookClick}
-                icon={Plus}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs px-4 py-2.5 rounded-xl border border-indigo-200 transition-all"
+                onClick={() => setQuickEntryDiaryId(primaryDiaryId)}
+                icon={Edit3}
               >
-                Create your first book
+                Log Today's Entry
               </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {books.map((book) => (
-                <BookCard key={book._id} book={book} onDelete={() => setBookToDelete(book._id)} />
-              ))}
-            </div>
-          )}
+            )}
+
+            <Button
+              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-500/25"
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={Plus}
+            >
+              New Life Diary
+            </Button>
+          </div>
         </div>
 
+        {/* Tabs: My Diaries vs Unlocked Diaries */}
+        <div className="flex items-center gap-4 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('my-diaries')}
+            className={`pb-3 px-1 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'my-diaries'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>My Life Diaries ({myDiaries.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('unlocked')}
+            className={`pb-3 px-1 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'unlocked'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Unlocked Diaries ({unlockedDiaries.length})</span>
+          </button>
+        </div>
+
+        {/* Content Section */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <DiaryCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : currentList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-3xl border-2 border-dashed border-gray-200 text-center space-y-4">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">
+              {activeTab === 'my-diaries' ? 'No life diary started yet' : 'No unlocked diaries yet'}
+            </h3>
+            <p className="text-sm text-gray-500 max-w-sm">
+              {activeTab === 'my-diaries'
+                ? 'Start your living life diary. Log your memories, photos, and video clips anytime you want.'
+                : 'Browse our explore feed to discover authentic daily vlogs written by creators and unlock them with Razorpay.'}
+            </p>
+            {activeTab === 'my-diaries' ? (
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                icon={Plus}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md"
+              >
+                Start your Life Diary
+              </Button>
+            ) : (
+              <Link
+                to="/explore"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md"
+              >
+                <Compass className="w-4 h-4" />
+                Explore Creators
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentList.map((diary) => (
+              <BookCard
+                key={diary._id}
+                book={diary}
+                onDelete={() => setDiaryToDelete(diary._id)}
+                onQuickAddEntry={(id) => setQuickEntryDiaryId(id)}
+                isPurchasedView={activeTab === 'unlocked'}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Modals */}
-        <ConfirmationModel
-          isOpen={!!bookToDelete}
-          onClose={() => setBookToDelete(null)}
-          onConfirm={handleDeleteBook}
-          title="Delete eBook"
-          message="Are you sure you want to delete this eBook? This action cannot be undone."
+        <ConfirmationModal
+          isOpen={!!diaryToDelete}
+          onClose={() => setDiaryToDelete(null)}
+          onConfirm={handleDeleteDiary}
+          title="Delete Diary"
+          message="Are you sure you want to delete this diary? All written memories, photos, and video links will be permanently removed."
         />
+
         <CreateBookModal
-          isOpen={isCreateModelOpen}
+          isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onBookCreated={handleBookCreated}
+          onBookCreated={handleDiaryCreated}
         />
+
+        {quickEntryDiaryId && (
+          <LogEntryModal
+            isOpen={!!quickEntryDiaryId}
+            onClose={() => setQuickEntryDiaryId(null)}
+            diaryId={quickEntryDiaryId}
+            onEntrySaved={fetchDiaries}
+          />
+        )}
       </div>
     </DashBoardLayout>
   );

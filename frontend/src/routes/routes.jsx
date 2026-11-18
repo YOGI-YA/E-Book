@@ -5,11 +5,13 @@ import SignupPage from '../pages/SignupPage';
 import MainLayout from '../layout/MainLayout';
 import AuthLayout from '../layout/AuthLayout';
 import DashboardPage from '../pages/DashboardPage';
+import ExplorePage from '../pages/ExplorePage';
 import ProtectedRoutes from '../components/auth/ProtectedRoutes';
 import EditorPage from '../pages/EditorPage';
 import ViewBookPage from '../pages/ViewBookPage';
 import ProfilePage from '../pages/ProfilePage';
 import PublicRoute from '../components/auth/PublicRoute';
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route>
@@ -43,6 +45,14 @@ export const router = createBrowserRouter(
         }
       />
       <Route
+        path="/explore"
+        element={
+          <ProtectedRoutes>
+            <ExplorePage />
+          </ProtectedRoutes>
+        }
+      />
+      <Route
         path="/editor/:bookId"
         element={
           <ProtectedRoutes>
@@ -50,14 +60,7 @@ export const router = createBrowserRouter(
           </ProtectedRoutes>
         }
       />
-      <Route
-        path="/view-book/:bookId"
-        element={
-          <ProtectedRoutes>
-            <ViewBookPage />
-          </ProtectedRoutes>
-        }
-      />
+      <Route path="/view-book/:bookId" element={<ViewBookPage />} />
       <Route
         path="/profile"
         element={

@@ -1,10 +1,23 @@
 export const API_PATHS = {
   AUTH: {
-    REGISTER: '/api/auth/register',
-    LOGIN: '/api/auth/login',
+    SEND_OTP: '/api/auth/send-otp',
+    VERIFY_OTP: '/api/auth/verify-otp',
     GET_PROFILE: '/api/auth/profile',
     UPDATE_PROFILE: '/api/auth/profile',
   },
+  DIARIES: {
+    CREATE: '/api/diary',
+    GET_MY_DIARIES: '/api/diary',
+    GET_BY_ID: '/api/diary',
+    GET_PUBLIC_FEED: '/api/diary/explore',
+    GET_PURCHASED: '/api/diary/purchased',
+    UPDATE: '/api/diary',
+    DELETE: '/api/diary',
+    UPDATE_COVER: '/api/diary/cover',
+    UPLOAD_MEDIA: '/api/diary/upload-media',
+    ENTRY: '/api/diary',
+  },
+  // Backwards compatibility alias
   BOOKS: {
     CREATE_BOOK: '/api/book',
     GET_BOOK: '/api/book',
@@ -12,6 +25,11 @@ export const API_PATHS = {
     UPDATE_BOOK: '/api/book',
     DELETE_BOOK: '/api/book',
     UPDATE_COVER: '/api/book/cover',
+  },
+  PAYMENT: {
+    CREATE_ORDER: '/api/payment/create-order',
+    VERIFY_PAYMENT: '/api/payment/verify-payment',
+    GET_HISTORY: '/api/payment/history',
   },
   AI: {
     GENERATE_OUTLINE: '/api/ai/generate-outline',

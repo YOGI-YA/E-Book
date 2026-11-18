@@ -1,73 +1,136 @@
 import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, BookOpen } from 'lucide-react';
+import {
+  Edit,
+  Trash2,
+  Calendar,
+  Eye,
+  Plus,
+  Image as ImageIcon,
+  Video as VideoIcon,
+} from 'lucide-react';
 
-const BookCard = ({ book, onDelete }) => {
+const BookCard = ({ book, onDelete, onQuickAddEntry, isPurchasedView = false }) => {
   const navigate = useNavigate();
   const coverImageUrl = book.coverImage || '';
+  const entriesCount = book.chapters?.length || 0;
 
   return (
     <div
-      className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-2"
+      className="group relative bg-white rounded-3xl shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/80 hover:-translate-y-1.5 flex flex-col justify-between"
       onClick={() => navigate(`/view-book/${book._id}`)}
     >
-      <div className="relative h-80 bg-gradient-to-br from-violet-100 to-purple-100 overflow-hidden">
-        {coverImageUrl ? (
-          <img
-            src={coverImageUrl}
-            alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={(e) => {
-              e.target.src = '';
-              e.target.style.display = 'none';
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <BookOpen className="w-24 h-24 text-violet-300" />
+      <div>
+        {/* Cover / Header */}
+        <div className="relative h-48 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 overflow-hidden">
+          {coverImageUrl ? (
+            <img
+              src={coverImageUrl}
+              alt={book.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col justify-end p-5 text-white bg-black/15">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-200 mb-1">
+                {book.category || 'Daily Vlog'}
+              </span>
+              <h4 className="text-lg font-black leading-snug line-clamp-2">{book.title}</h4>
+            </div>
+          )}
+
+          {/* Price or Access Badge */}
+          <div className="absolute top-3 right-3 flex items-center gap-1.5">
+            {book.isPremium && book.price > 0 ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-slate-950 font-black text-xs rounded-full shadow-md">
+                ₹{book.price}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500 text-white font-bold text-xs rounded-full shadow-md">
+                Free
+              </span>
+            )}
           </div>
-        )}
 
-        {/* Overlay Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          {/* Mood Badge */}
+          {book.mood && (
+            <div className="absolute top-3 left-3">
+              <span className="px-2.5 py-1 bg-black/40 backdrop-blur-md text-white text-[11px] font-semibold rounded-xl">
+                ✨ {book.mood}
+              </span>
+            </div>
+          )}
 
-        {/* Action Buttons */}
-        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/editor/${book._id}`);
-            }}
-            className="p-2.5 bg-white/95 backdrop-blur-sm rounded-lg hover:bg-violet-500 hover:text-white transition-all duration-200 shadow-lg hover:scale-110"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(book._id);
-            }}
-            className="p-2.5 bg-white/95 backdrop-blur-sm rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200 shadow-lg hover:scale-110"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {/* Hover Actions (Log Entry / Edit / Delete) */}
+          {!isPurchasedView && (
+            <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {onQuickAddEntry && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickAddEntry(book._id);
+                  }}
+                  className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition-all"
+                  title="Log Today's Entry"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/editor/${book._id}`);
+                }}
+                className="p-2 bg-white/95 rounded-xl text-gray-700 hover:text-indigo-600 hover:bg-white shadow-md transition-all"
+                title="Edit Diary Settings"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              {onDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(book._id);
+                  }}
+                  className="p-2 bg-white/95 rounded-xl text-gray-700 hover:text-red-600 hover:bg-white shadow-md transition-all"
+                  title="Delete Diary"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Info Body */}
+        <div className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+              {book.category || 'Daily Vlog'}
+            </span>
+            <span className="flex items-center gap-1 font-semibold">
+              <Calendar className="w-3.5 h-3.5" />
+              {entriesCount} {entriesCount === 1 ? 'day' : 'days'}
+            </span>
+          </div>
+
+          <h3 className="text-base font-extrabold text-gray-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+            {book.title}
+          </h3>
+
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+            {book.subtitle || 'Personal thoughts and daily life memories.'}
+          </p>
         </div>
       </div>
 
-      <div className="p-5">
-        <div className="mb-3">
-          <span className="inline-block px-3 py-1 text-xs font-semibold text-violet-600 bg-violet-100 rounded-full">
-            {book.category || 'Book'}
-          </span>
-        </div>
-        <div className="space-y-2">
-          <h3 className="text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-violet-600 transition-colors duration-200">
-            {book.title}
-          </h3>
-          <p className="text-sm text-gray-600 font-medium flex items-center gap-1">
-            <span className="text-gray-400">by</span>
-            {book.author}
-          </p>
-        </div>
+      {/* Footer */}
+      <div className="px-4 py-3 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
+        <span className="truncate max-w-[130px] font-medium">by {book.author}</span>
+        <span className="font-bold text-indigo-600 group-hover:underline flex items-center gap-1">
+          <Eye className="w-3.5 h-3.5" /> Open Diary
+        </span>
       </div>
     </div>
   );

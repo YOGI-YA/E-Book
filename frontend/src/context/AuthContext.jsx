@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import axiosInstance from '../utils/axiosInstance';
+import { API_PATHS } from '../utils/apiPath';
 
 const AuthContext = createContext(null);
 
@@ -15,25 +17,49 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const checkAuthStatus = useCallback(() => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
 
-      if (token && userStr) {
-        const parsed = JSON.parse(userStr);
+      if (token) {
+        if (userStr) {
+          try {
+            const parsed = JSON.parse(userStr);
+            const actualUser = parsed.data ?? parsed;
+            setUser(actualUser);
+            setIsAuthenticated(true);
+          } catch {
+            // ignore JSON parse error
+          }
+        }
 
-        const actualUser = parsed.data ?? parsed;
-
-        setUser(actualUser);
-        setIsAuthenticated(true);
+        // Fetch fresh profile from backend
+        try {
+          const profileRes = await axiosInstance.get(API_PATHS.AUTH.GET_PROFILE);
+          if (profileRes.data?.data) {
+            const freshUser = profileRes.data.data;
+            setUser(freshUser);
+            localStorage.setItem('user', JSON.stringify(freshUser));
+            setIsAuthenticated(true);
+          }
+        } catch (err) {
+          // If token is expired (401), clean up
+          if (err.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        }
       } else {
         setUser(null);
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      logout();
+      console.error('Auth check error:', error);
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -44,8 +70,8 @@ export const AuthProvider = ({ children }) => {
   }, [checkAuthStatus]);
 
   const login = (userData, token) => {
-    const actualData = userData.data ?? userData;
-    localStorage.setItem('token', token);
+    const actualData = userData?.data ?? userData;
+    if (token) localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(actualData));
 
     setUser(actualData);
@@ -61,7 +87,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (updatedUser) => {
-    const newUserData = { ...user, ...updatedUser };
+    const actualData = updatedUser?.data ?? updatedUser;
+    const newUserData = { ...user, ...actualData };
     localStorage.setItem('user', JSON.stringify(newUserData));
     setUser(newUserData);
   };

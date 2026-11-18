@@ -92,10 +92,15 @@ const EditorPage = () => {
     try {
       await axiosInstance.put(`${API_PATHS.BOOKS.UPDATE_BOOK}/${bookId}`, {
         title: book.title,
-        description: book.description,
+        subtitle: book.subtitle,
+        category: book.category,
+        mood: book.mood,
+        isPremium: Boolean(book.isPremium),
+        price: Number(book.price) || 0,
+        freePreviewEntries: Number(book.freePreviewEntries) || 1,
         chapters: book.chapters,
       });
-      toast.success('Book saved successfully!');
+      toast.success('Diary saved successfully!');
     } catch (error) {
       console.error('Save failed:', error);
       toast.error(error.response?.data?.message || 'Failed to save changes.');
@@ -272,7 +277,7 @@ const EditorPage = () => {
               className={`${activeTab === 'details' ? 'bg-black text-white' : 'hover:bg-gray-200'} px-4 py-2 rounded`}
               onClick={() => setActiveTab('details')}
             >
-              <NotebookText className="inline-block w-4 h-4 mr-2" /> Book Details
+              <NotebookText className="inline-block w-4 h-4 mr-2" /> Diary Details & Monetization
             </button>
           </div>
 

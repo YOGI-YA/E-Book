@@ -1,23 +1,26 @@
 import { FEATURES } from '../../utils/data.js';
+import { Sparkles, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Features = () => {
   return (
-    <div id="features" className="py-20 lg:py-32 bg-white">
+    <div id="features" className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-violet-100 rounded-full text-violet-600 font-medium text-sm mb-6">
-            <span>✨</span>
-            <span>Features</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 font-semibold text-xs mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Built for Daily Life Creators & Avid Readers</span>
           </div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-4">
             Everything you need to{' '}
-            <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-              Create a Book
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              Vlog in Written Text
             </span>
           </h2>
-          <p className="text-xl text-gray-600">
-            Our platform is packed with powerful features to make book creation effortless
+          <p className="text-base sm:text-lg text-gray-500">
+            A frictionless platform to document your days, verify with instant email OTP, and
+            monetize via Razorpay.
           </p>
         </div>
 
@@ -28,42 +31,22 @@ const Features = () => {
             return (
               <div
                 key={index}
-                className="group relative bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-violet-300 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="group relative bg-white border border-gray-200/80 rounded-3xl p-8 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
               >
-                {/* Hover gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                {/* Content */}
-                <div className="relative">
+                <div>
                   <div
-                    className={`w-14 h-14 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center shadow-lg mb-6 group-hover:scale-110 transition-all duration-300`}
+                    className={`w-12 h-12 bg-gradient-to-br ${feature.gradient} rounded-2xl flex items-center justify-center shadow-lg mb-6 group-hover:scale-105 transition-all`}
                   >
-                    <Icon className="w-7 h-7 text-white" />
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
 
-                  <div className="mb-4">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                  </div>
+                  <h3 className="text-lg font-black text-gray-900 mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                </div>
 
-                  <div className="flex items-center text-violet-600 font-medium text-sm group-hover:text-violet-700 transition-colors">
-                    <span className="flex items-center">
-                      Learn more
-                      <svg
-                        className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </span>
-                  </div>
+                <div className="pt-6 mt-4 border-t border-gray-100 flex items-center text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
+                  <span>Explore capability</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </div>
               </div>
             );
@@ -71,22 +54,22 @@ const Features = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-2xl p-12 text-center shadow-2xl">
-          <p className="text-2xl font-bold text-white mb-6">Ready to get started?</p>
-          <a
-            href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-violet-600 rounded-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg"
-          >
-            <span>Start Creating Today</span>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
-          </a>
+        <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 rounded-3xl p-8 sm:p-14 text-center shadow-2xl text-white space-y-4">
+          <h3 className="text-2xl sm:text-4xl font-black tracking-tight">
+            Ready to turn your life into a written vlog series?
+          </h3>
+          <p className="text-indigo-100 text-sm sm:text-base max-w-xl mx-auto">
+            Join thousands of creators writing daily diaries and earning from their true stories.
+          </p>
+          <div className="pt-4">
+            <Link
+              to="/signup"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 rounded-2xl font-black hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl"
+            >
+              <span>Get Started in 30 Seconds</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

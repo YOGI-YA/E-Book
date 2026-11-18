@@ -1,52 +1,60 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'name required'],
+      default: '',
+      trim: true,
     },
     email: {
       type: String,
-      required: [true, 'Email required'],
+      required: [true, 'Email is required'],
       unique: true,
       lowercase: true,
+      trim: true,
+      index: true,
     },
     password: {
       type: String,
-      required: [true, 'password required '],
-      minlength: 6,
       select: false,
     },
     avatar: {
       type: String,
       default: '',
     },
+    bio: {
+      type: String,
+      default: 'Sharing my daily life journey through written vlogs and personal diaries.',
+    },
     isPro: {
       type: Boolean,
       default: false,
     },
+    unlockedDiaries: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Book',
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
 userSchema.methods.generateToken = function () {
-  return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: '7d',
-  });
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+    },
+    process.env.JWT_SECRET || 'secretkeyfallback',
+    {
+      expiresIn: '30d',
+    }
+  );
 };
 
 const User = mongoose.model('User', userSchema);

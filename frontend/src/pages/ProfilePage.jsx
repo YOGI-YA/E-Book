@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    bio: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +26,7 @@ const ProfilePage = () => {
       setFormData({
         name: user.name || '',
         email: user.email || '',
+        bio: user.bio || '',
       });
     }
   }, [user]);
@@ -56,6 +58,7 @@ const ProfilePage = () => {
     try {
       const response = await axiosInstance.put(API_PATHS.AUTH.UPDATE_PROFILE, {
         name: formData.name,
+        bio: formData.bio,
       });
 
       updateUser(response.data.data ?? response.data);
@@ -181,6 +184,22 @@ const ProfilePage = () => {
                   </p>
                 </div>
 
+                {/* Bio Field */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-slate-900">Creator Bio</label>
+                  <textarea
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Tell your readers about yourself and what you write about..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent transition-all duration-200 resize-none text-sm"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Displayed on your public daily life diaries and vlogs.
+                  </p>
+                </div>
+
                 {/* Email Field */}
                 <div className="space-y-3">
                   <label className="block text-sm font-semibold text-slate-900">
@@ -196,7 +215,9 @@ const ProfilePage = () => {
                       className="w-full pl-12 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-medium cursor-not-allowed focus:outline-none transition-all duration-200"
                     />
                   </div>
-                  <p className="text-xs text-slate-500">Your email address cannot be changed.</p>
+                  <p className="text-xs text-slate-500">
+                    Used for passwordless OTP verification on every login.
+                  </p>
                 </div>
 
                 {/* Divider */}
@@ -245,13 +266,8 @@ const ProfilePage = () => {
           {/* Additional Info */}
           <div className="mt-8 text-center">
             <p className="text-sm text-slate-600">
-              Need to change your password?{' '}
-              <a
-                href="/settings/security"
-                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                Go to Security Settings
-              </a>
+              🔒 Passwordless Security: Your account is authenticated via one-time passcodes sent to{' '}
+              <span className="font-semibold text-indigo-600">{formData.email}</span>.
             </p>
           </div>
         </div>

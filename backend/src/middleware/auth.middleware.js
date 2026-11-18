@@ -14,14 +14,40 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     throw new ApiError(401, 'Unauthorized access');
   }
 
-  const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+  try {
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decodedToken?._id).select('-password');
+    if (!user) {
+      logger.error('User not found for decoded token');
+      throw new ApiError(401, 'User not authorized');
+    }
 
-  const user = await User.findById(decodedToken?._id).select('-password');
-  if (!user) {
-    logger.error('User not found for decoded token');
-    throw new ApiError(401, 'User not authorized');
+    req.user = user;
+    next();
+  } catch (err) {
+    logger.error('Token verification error:', err.message);
+    throw new ApiError(401, 'Invalid or expired session. Please sign in again.');
+  }
+});
+
+/**
+ * Optional JWT: Parses user if token is present, does not throw 401 if not present.
+ */
+export const optionalJWT = asyncHandler(async (req, _, next) => {
+  const token =
+    req.cookies?.token || req.header('authorization')?.replace('Bearer ', '') || req.query?.token;
+
+  if (!token) {
+    req.user = null;
+    return next();
   }
 
-  req.user = user;
+  try {
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decodedToken?._id).select('-password');
+    req.user = user || null;
+  } catch {
+    req.user = null;
+  }
   next();
 });
