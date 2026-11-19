@@ -1,4 +1,5 @@
 import { Book, Chapter } from '../models/Book.model.js';
+import { User } from '../models/User.model.js';
 import { ApiError } from '../utils/api-error.js';
 import { ApiResponse } from '../utils/api-response.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -11,11 +12,15 @@ const createBook = asyncHandler(async (req, res) => {
     author,
     subtitle,
     chapters = [],
+    accessType = 'free',
+    plans,
     isPremium = false,
     price = 0,
     mood = 'Daily Life',
     category = 'Daily Vlog',
     freePreviewEntries = 2,
+    coverImage = '',
+    upiId = '',
   } = req.body;
 
   if (!title || !author) {
@@ -57,16 +62,37 @@ const createBook = asyncHandler(async (req, res) => {
     chapterIds = [firstEntry._id];
   }
 
-  const parsedPrice = Number(price) || 0;
+  const isPaid = accessType === 'paid' || Boolean(isPremium);
+  const defaultPlans = {
+    weekly: {
+      enabled: plans?.weekly?.enabled ?? true,
+      price: Number(plans?.weekly?.price) || 49,
+    },
+    monthly: {
+      enabled: plans?.monthly?.enabled ?? true,
+      price: Number(plans?.monthly?.price) || Number(price) || 149,
+    },
+    annual: {
+      enabled: plans?.annual?.enabled ?? true,
+      price: Number(plans?.annual?.price) || 899,
+    },
+  };
+
+  const parsedPrice = isPaid ? defaultPlans.monthly.price : 0;
+
   const diary = await Book.create({
     userId: req.user._id,
     title,
     author,
     subtitle: subtitle || '',
+    coverImage: coverImage?.trim() || '',
+    upiId: upiId?.trim() || req.user.payoutSettings?.upiId || '',
     chapters: chapterIds,
     mood,
     category,
-    isPremium: Boolean(isPremium && parsedPrice > 0),
+    accessType: isPaid ? 'paid' : 'free',
+    plans: defaultPlans,
+    isPremium: isPaid,
     price: parsedPrice,
     freePreviewEntries: Number(freePreviewEntries) || 2,
     isOngoing: true,
@@ -119,7 +145,7 @@ const getPublicDiaries = asyncHandler(async (req, res) => {
     const isOwner = currentUserId && d.userId.toString() === currentUserId;
     const isPurchased =
       currentUserId && d.purchasedBy && d.purchasedBy.some((id) => id.toString() === currentUserId);
-    const isFree = !d.isPremium || d.price === 0;
+    const isFree = d.accessType === 'free' || (!d.isPremium && (d.price || 0) <= 0);
     const isUnlocked = isOwner || isPurchased || isFree;
 
     return {
@@ -130,6 +156,8 @@ const getPublicDiaries = asyncHandler(async (req, res) => {
       coverImage: d.coverImage,
       mood: d.mood,
       category: d.category,
+      accessType: d.accessType || (d.isPremium ? 'paid' : 'free'),
+      plans: d.plans,
       isPremium: d.isPremium,
       price: d.price,
       freePreviewEntries: d.freePreviewEntries,
@@ -156,13 +184,41 @@ const getBookById = asyncHandler(async (req, res) => {
 
   const currentUserId = req.user?._id ? req.user._id.toString() : null;
   const isOwner = currentUserId && diary.userId.toString() === currentUserId;
-  const isPurchased =
-    currentUserId &&
-    diary.purchasedBy &&
-    diary.purchasedBy.some((id) => id.toString() === currentUserId);
-  const isFree = !diary.isPremium || diary.price === 0;
 
+  let activeSubscription = null;
+  let isPurchased = false;
+
+  if (currentUserId) {
+    const user = await User.findById(currentUserId);
+    activeSubscription = user?.subscriptions?.find(
+      (sub) =>
+        sub.diaryId.toString() === diary._id.toString() && new Date(sub.expiresAt) > new Date()
+    );
+
+    isPurchased = Boolean(
+      activeSubscription ||
+      (diary.purchasedBy && diary.purchasedBy.some((id) => id.toString() === currentUserId)) ||
+      (user?.unlockedDiaries &&
+        user.unlockedDiaries.some((id) => id.toString() === diary._id.toString()))
+    );
+  }
+
+  const isFree = diary.accessType === 'free' || (!diary.isPremium && (diary.price || 0) <= 0);
   const isUnlocked = isOwner || isPurchased || isFree;
+
+  // Resolve creator's direct payout details (for direct UPI payment & scanner)
+  const creator = await User.findById(diary.userId).select('name payoutSettings');
+  const creatorPayout = {
+    upiId: diary.upiId || creator?.payoutSettings?.upiId || '',
+    accountHolderName: creator?.payoutSettings?.accountHolderName || creator?.name || diary.author,
+    payoutMethod: creator?.payoutSettings?.payoutMethod || 'upi',
+  };
+
+  const resolvedPlans = diary.plans || {
+    weekly: { enabled: true, price: 49 },
+    monthly: { enabled: true, price: diary.price || 149 },
+    annual: { enabled: true, price: 899 },
+  };
 
   if (isUnlocked) {
     return res.status(200).json(
@@ -173,6 +229,16 @@ const getBookById = asyncHandler(async (req, res) => {
           isUnlocked: true,
           isOwner,
           isPurchased,
+          creatorPayout,
+          accessType: diary.accessType || (diary.isPremium ? 'paid' : 'free'),
+          plans: resolvedPlans,
+          subscription: activeSubscription
+            ? {
+                isActive: true,
+                planType: activeSubscription.planType,
+                expiresAt: activeSubscription.expiresAt,
+              }
+            : null,
         },
         'Diary fetched successfully'
       )
@@ -180,7 +246,7 @@ const getBookById = asyncHandler(async (req, res) => {
   }
 
   // Paywalled Diary: Reader has not unlocked yet
-  const previewLimit = Math.max(1, diary.freePreviewEntries || 2);
+  const previewLimit = Math.max(0, diary.freePreviewEntries ?? 2);
   const chaptersWithPaywall = diary.chapters.map((ch, index) => {
     if (index < previewLimit) {
       return {
@@ -201,7 +267,7 @@ const getBookById = asyncHandler(async (req, res) => {
       photosCount: ch.photos?.length || 0,
       videosCount: ch.videos?.length || 0,
       content:
-        '🔒 This daily life memory is locked. Unlock this creator’s diary to read full entries and view photos & videos.',
+        '🔒 This daily life memory is locked. Subscribe to this creator’s diary to read full entries and view photos & videos.',
       isLocked: true,
     };
   });
@@ -217,17 +283,20 @@ const getBookById = asyncHandler(async (req, res) => {
         coverImage: diary.coverImage,
         mood: diary.mood,
         category: diary.category,
+        accessType: diary.accessType || (diary.isPremium ? 'paid' : 'free'),
+        plans: resolvedPlans,
         isPremium: diary.isPremium,
         price: diary.price,
         freePreviewEntries: diary.freePreviewEntries,
         chapters: chaptersWithPaywall,
         createdAt: diary.createdAt,
+        creatorPayout,
         isUnlocked: false,
         isOwner: false,
         isPurchased: false,
         lockedCount: Math.max(0, diary.chapters.length - previewLimit),
       },
-      'Diary preview fetched successfully. Unlock for full access.'
+      'Diary preview fetched successfully. Subscribe for full access.'
     )
   );
 });
@@ -384,9 +453,38 @@ const updateBook = asyncHandler(async (req, res) => {
     }
   }
 
-  if (diaryData.price !== undefined) {
+  if (diaryData.accessType !== undefined) {
+    diaryData.isPremium = diaryData.accessType === 'paid';
+  }
+
+  if (diaryData.plans !== undefined) {
+    const weeklyPrice = Number(diaryData.plans?.weekly?.price) || 49;
+    const monthlyPrice = Number(diaryData.plans?.monthly?.price) || 149;
+    const annualPrice = Number(diaryData.plans?.annual?.price) || 899;
+
+    diaryData.plans = {
+      weekly: {
+        enabled: diaryData.plans?.weekly?.enabled ?? true,
+        price: weeklyPrice,
+      },
+      monthly: {
+        enabled: diaryData.plans?.monthly?.enabled ?? true,
+        price: monthlyPrice,
+      },
+      annual: {
+        enabled: diaryData.plans?.annual?.enabled ?? true,
+        price: annualPrice,
+      },
+    };
+
+    diaryData.price = monthlyPrice;
+  } else if (diaryData.price !== undefined) {
     diaryData.price = Number(diaryData.price) || 0;
     diaryData.isPremium = diaryData.price > 0;
+  }
+
+  if (diaryData.freePreviewEntries !== undefined) {
+    diaryData.freePreviewEntries = Math.max(0, Number(diaryData.freePreviewEntries) || 0);
   }
 
   const updatedDiary = await Book.findByIdAndUpdate(req.params.id, diaryData, {
