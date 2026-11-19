@@ -25,9 +25,15 @@ const errorHandler = (err, req, res) => {
     path: req.originalUrl,
   });
 
+  const retryAfter =
+    error.errors?.[0]?.retryAfter ||
+    (typeof error.data?.retryAfter === 'number' ? error.data.retryAfter : undefined);
+
   const response = {
     statusCode: error.statusCode,
     message: error.message,
+    errors: error.errors || [],
+    retryAfter,
     ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
   };
 
