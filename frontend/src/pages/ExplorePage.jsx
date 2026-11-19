@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Lock, BookOpen, User, Flame, Compass, ArrowRight } from 'lucide-react';
+import { Search, BookOpen, Compass, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import DashBoardLayout from '../components/layout/DashBoardLayout';
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPath';
-import { useAuth } from '../context/AuthContext';
 
 const CATEGORIES = [
   'All',
@@ -23,11 +22,11 @@ const ExplorePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchFeed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const fetchFeed = async () => {

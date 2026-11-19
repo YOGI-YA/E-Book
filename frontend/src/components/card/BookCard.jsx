@@ -1,13 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import {
-  Edit,
-  Trash2,
-  Calendar,
-  Eye,
-  Plus,
-  Image as ImageIcon,
-  Video as VideoIcon,
-} from 'lucide-react';
+import { Edit, Trash2, Calendar, Eye, Plus } from 'lucide-react';
 
 const BookCard = ({ book, onDelete, onQuickAddEntry, isPurchasedView = false }) => {
   const navigate = useNavigate();
@@ -42,9 +34,9 @@ const BookCard = ({ book, onDelete, onQuickAddEntry, isPurchasedView = false }) 
 
           {/* Price or Access Badge */}
           <div className="absolute top-3 right-3 flex items-center gap-1.5">
-            {book.isPremium && book.price > 0 ? (
+            {book.accessType === 'paid' || (book.isPremium && book.price > 0) ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 text-slate-950 font-black text-xs rounded-full shadow-md">
-                ₹{book.price}
+                Sub ₹{book.plans?.monthly?.price || book.price}/mo
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500 text-white font-bold text-xs rounded-full shadow-md">
