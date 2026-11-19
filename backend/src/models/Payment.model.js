@@ -14,6 +14,19 @@ const paymentSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    paymentMethod: {
+      type: String,
+      enum: ['razorpay', 'direct_upi'],
+      default: 'razorpay',
+    },
+    upiId: {
+      type: String,
+      default: '',
+    },
+    upiTransactionRef: {
+      type: String,
+      default: '',
+    },
     razorpayOrderId: {
       type: String,
       required: true,
@@ -34,6 +47,18 @@ const paymentSchema = new mongoose.Schema(
     currency: {
       type: String,
       default: 'INR',
+    },
+    planType: {
+      type: String,
+      enum: ['weekly', 'monthly', 'annual', 'lifetime'],
+      default: 'monthly',
+    },
+    planDurationDays: {
+      type: Number,
+      default: 30,
+    },
+    expiresAt: {
+      type: Date,
     },
     status: {
       type: String,
