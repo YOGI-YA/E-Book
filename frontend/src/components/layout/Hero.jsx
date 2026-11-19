@@ -1,12 +1,4 @@
-import {
-  ArrowRight,
-  Sparkles,
-  BookOpen,
-  Compass,
-  ShieldCheck,
-  Heart,
-  DollarSign,
-} from 'lucide-react';
+import { ArrowRight, Sparkles, Compass, ShieldCheck, DollarSign } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 

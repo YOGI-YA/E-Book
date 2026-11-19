@@ -3,7 +3,7 @@ import { BookOpen, Compass, LayoutDashboard, User, LogOut, ChevronDown } from 'l
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const DashBoardLayout = ({ children, activeMenu }) => {
+const DashBoardLayout = ({ children }) => {
   const { user, logout } = useAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
