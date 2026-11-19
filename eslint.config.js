@@ -3,6 +3,11 @@ import react from 'eslint-plugin-react';
 import hooks from 'eslint-plugin-react-hooks';
 
 export default [
+  // Global ignores
+  {
+    ignores: ['**/dist/**', '**/node_modules/**', '**/build/**', '**/.git/**'],
+  },
+
   // Base JS rules
   js.configs.recommended,
 
@@ -22,7 +27,21 @@ export default [
         window: 'readonly',
         document: 'readonly',
         localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        navigator: 'readonly',
+        FormData: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        Blob: 'readonly',
+        File: 'readonly',
+        FileReader: 'readonly',
+        AbortController: 'readonly',
         console: 'readonly',
+        alert: 'readonly',
+        prompt: 'readonly',
+        confirm: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
 
         // Timers (FIX for no-undef)
         setTimeout: 'readonly',
