@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Calendar,
-  Clock,
-  Smile,
-  CloudSun,
   MapPin,
   Image as ImageIcon,
   Video as VideoIcon,
@@ -12,7 +8,6 @@ import {
   Plus,
   Trash2,
   Save,
-  X,
   Play,
 } from 'lucide-react';
 import Modal from '../ui/Modal';
