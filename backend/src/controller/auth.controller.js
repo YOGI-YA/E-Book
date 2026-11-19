@@ -25,7 +25,9 @@ const sendOtp = asyncHandler(async (req, res) => {
     const timeSinceLastOtp = (Date.now() - new Date(existingOtp.createdAt).getTime()) / 1000;
     if (timeSinceLastOtp < 40) {
       const waitSeconds = Math.ceil(40 - timeSinceLastOtp);
-      throw new ApiError(429, `Please wait ${waitSeconds}s before requesting a new OTP.`);
+      throw new ApiError(429, `Please wait ${waitSeconds}s before requesting a new OTP.`, [
+        { retryAfter: waitSeconds },
+      ]);
     }
   }
 
@@ -44,7 +46,7 @@ const sendOtp = asyncHandler(async (req, res) => {
     attempts: 0,
   });
 
-  // Send OTP Email via Nodemailer (yogender.tech@gmail.com)
+  // Send OTP Email via Nodemailer
   const mailResult = await sendOtpEmail(normalizedEmail, otpCode);
 
   return res.status(200).json(
@@ -54,6 +56,8 @@ const sendOtp = asyncHandler(async (req, res) => {
         email: normalizedEmail,
         expiresIn: '10 minutes',
         loggedToConsole: mailResult.loggedToConsole || false,
+        cooldownSeconds: 40,
+        devOtp: process.env.NODE_ENV !== 'production' ? otpCode : undefined,
       },
       'OTP sent successfully to your email.'
     )
@@ -144,6 +148,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
             bio: user.bio,
             isPro: user.isPro,
             unlockedDiaries: user.unlockedDiaries || [],
+            subscriptions: user.subscriptions || [],
           },
           token,
           isNewUser,
@@ -157,10 +162,9 @@ const verifyOtp = asyncHandler(async (req, res) => {
  * Get Current User Profile
  */
 const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate(
-    'unlockedDiaries',
-    'title author coverImage price'
-  );
+  const user = await User.findById(req.user._id)
+    .populate('unlockedDiaries', 'title author coverImage price')
+    .populate('subscriptions.diaryId', 'title author coverImage price');
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -177,6 +181,15 @@ const getProfile = asyncHandler(async (req, res) => {
         bio: user.bio,
         isPro: user.isPro,
         unlockedDiaries: user.unlockedDiaries || [],
+        subscriptions: user.subscriptions || [],
+        payoutSettings: user.payoutSettings || {
+          payoutMethod: 'upi',
+          upiId: '',
+          accountHolderName: '',
+          accountNumber: '',
+          ifscCode: '',
+          bankName: '',
+        },
         createdAt: user.createdAt,
       },
       'User profile fetched successfully'
@@ -185,7 +198,7 @@ const getProfile = asyncHandler(async (req, res) => {
 });
 
 /**
- * Update User Profile
+ * Update User Profile & Payout Settings
  */
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -197,6 +210,17 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   if (req.body.name !== undefined) user.name = req.body.name.trim();
   if (req.body.bio !== undefined) user.bio = req.body.bio.trim();
   if (req.body.avatar !== undefined) user.avatar = req.body.avatar;
+
+  if (req.body.payoutSettings !== undefined) {
+    user.payoutSettings = {
+      payoutMethod: req.body.payoutSettings.payoutMethod || 'upi',
+      upiId: req.body.payoutSettings.upiId?.trim() || '',
+      accountHolderName: req.body.payoutSettings.accountHolderName?.trim() || '',
+      accountNumber: req.body.payoutSettings.accountNumber?.trim() || '',
+      ifscCode: req.body.payoutSettings.ifscCode?.trim() || '',
+      bankName: req.body.payoutSettings.bankName?.trim() || '',
+    };
+  }
 
   const updatedUser = await user.save();
 
@@ -210,6 +234,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         avatar: updatedUser.avatar,
         bio: updatedUser.bio,
         isPro: updatedUser.isPro,
+        payoutSettings: updatedUser.payoutSettings,
       },
       'Profile updated successfully'
     )
