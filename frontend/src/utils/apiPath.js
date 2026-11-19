@@ -29,7 +29,11 @@ export const API_PATHS = {
   PAYMENT: {
     CREATE_ORDER: '/api/payment/create-order',
     VERIFY_PAYMENT: '/api/payment/verify-payment',
+    DIRECT_UPI_CONFIRM: '/api/payment/direct-upi-confirm',
     GET_HISTORY: '/api/payment/history',
+    CREATOR_EARNINGS: '/api/payment/creator-earnings',
+    REQUEST_PAYOUT: '/api/payment/request-payout',
+    GET_PAYOUTS: '/api/payment/payouts',
   },
   AI: {
     GENERATE_OUTLINE: '/api/ai/generate-outline',
