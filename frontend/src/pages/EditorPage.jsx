@@ -95,9 +95,14 @@ const EditorPage = () => {
         subtitle: book.subtitle,
         category: book.category,
         mood: book.mood,
+        coverImage:
+          typeof book.coverImage === 'string' ? book.coverImage : book.coverImage?.url || '',
+        upiId: book.upiId || '',
+        accessType: book.accessType || (book.isPremium ? 'paid' : 'free'),
+        plans: book.plans,
         isPremium: Boolean(book.isPremium),
         price: Number(book.price) || 0,
-        freePreviewEntries: Number(book.freePreviewEntries) || 1,
+        freePreviewEntries: Number(book.freePreviewEntries) || 2,
         chapters: book.chapters,
       });
       toast.success('Diary saved successfully!');
@@ -320,6 +325,8 @@ const EditorPage = () => {
               onCoverUpload={handleCoverImageUpload}
               fileInputRef={fileInputRef}
               isUploading={isUploading}
+              onSave={handleSaveChanges}
+              isSaving={isSaving}
             />
           )}
         </section>
