@@ -85,6 +85,11 @@ const bookSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    upiId: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     chapters: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -106,6 +111,25 @@ const bookSchema = new mongoose.Schema(
       type: String,
       default: 'Daily Vlog',
       trim: true,
+    },
+    accessType: {
+      type: String,
+      enum: ['free', 'paid'],
+      default: 'free',
+    },
+    plans: {
+      weekly: {
+        enabled: { type: Boolean, default: true },
+        price: { type: Number, default: 49, min: 0 },
+      },
+      monthly: {
+        enabled: { type: Boolean, default: true },
+        price: { type: Number, default: 149, min: 0 },
+      },
+      annual: {
+        enabled: { type: Boolean, default: true },
+        price: { type: Number, default: 899, min: 0 },
+      },
     },
     isPremium: {
       type: Boolean,
