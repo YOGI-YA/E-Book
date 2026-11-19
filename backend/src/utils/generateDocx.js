@@ -12,13 +12,10 @@ import {
   PageNumber,
   NumberFormat,
   TabStopType,
-  TabStopPosition,
   BorderStyle,
   ShadingType,
   TableOfContents,
   PageBreak,
-  LevelFormat,
-  WidthType,
 } from 'docx';
 import fs from 'fs';
 import fetch from 'node-fetch';

@@ -60,15 +60,6 @@ function drawRule(doc, y, color = THEME.pageRule, thickness = 0.5) {
     .restore();
 }
 
-/** Draw a coloured rectangle accent bar on the left edge */
-function drawAccentBar(doc, y, height, color = THEME.accent) {
-  doc
-    .save()
-    .rect(THEME.marginLeft - 24, y, 4, height)
-    .fill(color)
-    .restore();
-}
-
 /** Return usable left / right x positions */
 function getMargins(doc) {
   return {
@@ -78,18 +69,9 @@ function getMargins(doc) {
   };
 }
 
-/** Register the page-number / footer event once */
-function attachFooters(doc, book, pageNumberRef) {
-  doc.on('pageAdded', () => {
-    // We'll draw footers in a post-pass using the range event; PDFKit
-    // doesn't support reliable after-page hooks, so we write them inline
-    // via drawFooter() called at the END of each page build.
-  });
-}
-
 /** Draw footer for the CURRENT page */
 function drawFooter(doc, book, pageNum) {
-  const { left, right, width } = getMargins(doc);
+  const { left, width } = getMargins(doc);
   const y = doc.page.height - THEME.marginBottom + 16;
 
   drawRule(doc, y - 6, THEME.pageRule, 0.4);
@@ -106,7 +88,6 @@ function drawFooter(doc, book, pageNum) {
 
 /** Draw a decorative drop-cap for the first letter of a paragraph */
 function drawDropCap(doc, letter, x, y, capSize = 46) {
-  const { left } = getMargins(doc);
   doc
     .save()
     .fontSize(capSize)
@@ -371,7 +352,7 @@ function buildTOC(doc, chapters, book, pageNumberRef) {
 }
 
 function buildChapterPage(doc, ch, index, book, pageNumberRef) {
-  const { left, right, width } = getMargins(doc);
+  const { left, width } = getMargins(doc);
   const ph = doc.page.height;
 
   // ── Chapter header band ──
